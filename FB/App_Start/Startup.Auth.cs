@@ -18,14 +18,8 @@ namespace FB
         public void ConfigureAuth(IAppBuilder app)
         {
             // Configure the UserManager
-            app.UseUserManagerFactory(new UserManagerOptions<ApplicationUserManager>()
-            {
-                DataProtectionProvider = app.GetDataProtectionProvider(),
-                Provider = new UserManagerProvider<ApplicationUserManager>()
-                {
-                    OnCreate = ApplicationUserManager.Create
-                }
-            });
+            app.CreatePerOwinContext(ApplicationDbContext.Create);
+            app.CreatePerOwinContext<ApplicationUserManager>(ApplicationUserManager.Create);
 
             // Enable the application to use a cookie to store information for the signed in user
             app.UseCookieAuthentication(new CookieAuthenticationOptions
@@ -42,11 +36,6 @@ namespace FB
             // Use a cookie to temporarily store information about a user logging in with a third party login provider
             app.UseExternalSignInCookie(DefaultAuthenticationTypes.ExternalCookie);
 
-
-
-
-
-
             // Uncomment the following lines to enable logging in with third party login providers
             //app.UseMicrosoftAccountAuthentication(
             //    clientId: "",
@@ -55,18 +44,7 @@ namespace FB
             //app.UseTwitterAuthentication(
             //   consumerKey: "",
             //   consumerSecret: "");
-
-
-
-
-
-
-
-
-
-
-
-            List<string> scope = new List<string>() { "email", "user_about_me", "user_hometown", "friends_about_me", "friends_photos" };
+            
             var x = new FacebookAuthenticationOptions();
             x.Scope.Add("email");
             x.Scope.Add("friends_about_me");

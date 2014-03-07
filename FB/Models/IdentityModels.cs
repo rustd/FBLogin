@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
+using Microsoft.Owin;
 
 namespace FB.Models
 {
@@ -21,8 +22,12 @@ namespace FB.Models
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext()
-            : base("DefaultConnection")
+            : base("DefaultConnection",false)
         {
+        }
+        public static ApplicationDbContext Create()
+        {
+            return new ApplicationDbContext();
         }
     }
 
@@ -33,23 +38,26 @@ namespace FB.Models
         {
         }
 
-        public static ApplicationUserManager Create(UserManagerOptions<ApplicationUserManager> options)
+        public static ApplicationUserManager Create(IdentityFactoryOptions<ApplicationUserManager> options, IOwinContext context)
         {
-            var manager = new ApplicationUserManager(new UserStore<ApplicationUser>(new ApplicationDbContext()));
-            // Configure the application user manager
+            var manager = new ApplicationUserManager(new UserStore<ApplicationUser>(context.Get<ApplicationDbContext>()));
+            // Configure validation logic for usernames
             manager.UserValidator = new UserValidator<ApplicationUser>(manager)
             {
                 AllowOnlyAlphanumericUserNames = false,
                 RequireUniqueEmail = true
             };
-            manager.PasswordValidator = new MinimumLengthValidator(6);
-            var dataProtectionProvider = options.DataProtectionProvider;
-            if (dataProtectionProvider != null)
+            // Configure validation logic for passwords
+            manager.PasswordValidator = new PasswordValidator
             {
-                manager.PasswordResetTokens = new DataProtectorTokenProvider(dataProtectionProvider.Create("PasswordReset"));
-                manager.UserConfirmationTokens = new DataProtectorTokenProvider(dataProtectionProvider.Create("ConfirmUser"));
-            }
+                RequiredLength = 6,
+                RequireNonLetterOrDigit = true,
+                RequireDigit = true,
+                RequireLowercase = true,
+                RequireUppercase = true,
+            };
             return manager;
         }
+
     }
 }
